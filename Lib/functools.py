@@ -21,6 +21,7 @@ from collections import namedtuple
 from reprlib import recursive_repr
 from _thread import RLock
 from types import GenericAlias
+import inspect
 
 
 ################################################################################
@@ -789,6 +790,17 @@ def _lru_cache_wrapper(user_function, maxsize, typed, _CacheInfo):
             misses += 1
             result = user_function(*args, **kwds)
             return result
+
+    elif not inspect.signature(user_function).parameters:
+
+        single_cache = sentinel
+        def wrapper():
+            nonlocal single_cache
+            if single_cache is not sentinel:
+                return single_cache
+            else:
+                single_cache = user_function()
+                return single_cache
 
     elif maxsize is None:
 
